@@ -1,0 +1,15 @@
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 10;
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]* 16) + 11]*512 -1;
+
+multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10);
+alias funnum R1;
+funnum = 3;
+call MOD_1;
+multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10);
+
+multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10);
+call MOD_5;
+multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10);
+

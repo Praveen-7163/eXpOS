@@ -1,0 +1,41 @@
+alias funnum R1;
+alias relpage R2;
+if(funnum == 1) then
+[SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] + 1;
+while([SYSTEM_STATUS_TABLE + 2] == 0) do
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4] = WAIT_MEM;
+multipush(R0,R1,R2,R3);
+call MOD_5;
+multipop(R0,R1,R2,R3);
+endwhile;
+[SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] - 1;
+[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1;
+alias retvalue R0;
+alias freepage R4;
+freepage = 0;
+while(1) do
+if([MEMORY_FREE_LIST + freepage] == 0) then
+[MEMORY_FREE_LIST + freepage] = 1;
+break;
+endif;
+freepage = freepage + 1;
+endwhile;
+retvalue = freepage;
+return;
+endif;
+
+if(funnum == 2) then
+[MEMORY_FREE_LIST + relpage] =[MEMORY_FREE_LIST + relpage] - 1;
+if([MEMORY_FREE_LIST + relpage] == 0) then
+[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] + 1;
+endif;
+alias p R5;
+p = 0;
+while(p<16) do
+if([PROCESS_TABLE + p*16 + 4] == WAIT_MEM) then
+[PROCESS_TABLE + p*16 + 4] = READY;
+endif;
+p = p + 1;
+endwhile;
+return;
+endif;

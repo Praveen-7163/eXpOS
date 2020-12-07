@@ -1,0 +1,194 @@
+alias funnum R1;
+alias file R2;
+alias index R3;
+alias blocknum R4;
+alias offset R5;
+alias memadd R6;
+
+if(funnum == 2) then
+alias bufnum R7;
+bufnum = blocknum%4;
+
+//print blocknum;
+//print offset;
+
+multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8);
+alias funnum1 R1;
+alias  pid1 R2;
+alias buffer1 R3;
+funnum1 = 1;
+pid1 = [SYSTEM_STATUS_TABLE + 1];
+buffer1 = bufnum;
+call MOD_0;
+multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8);
+
+if([BUFFER_TABLE + bufnum*4] != blocknum) then
+	if([BUFFER_TABLE + bufnum*4 + 1] == 1) then
+	multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8);
+	alias funnum2 R1;
+	alias  pid2 R2;
+	alias page2 R3;
+	alias block2 R4;
+	funnum2 = 1;
+	pid2 = [SYSTEM_STATUS_TABLE + 1];
+	page2 = 71 + bufnum;
+	block2 = [BUFFER_TABLE + bufnum*4];
+	call MOD_4;
+	multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8);
+
+	[BUFFER_TABLE + bufnum*4 + 1] = 0;
+	endif;
+
+	multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8);
+	alias funnum3 R1;
+	alias pid3 R2;
+	alias page3 R3;
+	alias block3 R4;
+	funnum3 = 2;
+	pid3 = [SYSTEM_STATUS_TABLE + 1];
+	page3 = 71 + bufnum;
+	block3 = blocknum;
+	call MOD_4;
+	multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8);
+
+	[BUFFER_TABLE + bufnum*4] = blocknum; 
+endif;
+
+[memadd] = [(71 + bufnum)*512 + offset];
+multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8);
+alias funnum4 R1;
+alias  pid4 R2;
+alias buffer2 R3;
+funnum4 = 2;
+pid4 = [SYSTEM_STATUS_TABLE + 1];
+buffer2 = bufnum;
+call MOD_0;
+multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8);
+return;
+endif;
+
+if(funnum == 3) then
+alias p R4;
+p = 0;
+while(p < 60) do
+if([INODE_TABLE + p*16 + 1] == file) then
+break;
+endif;
+p = p + 1;
+endwhile;
+
+if(p == 60) then
+alias retvalue1 R0;
+retvalue1 = -1;
+return;
+endif;
+
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias funnum1 R1;
+alias pid1 R2;
+alias inodeind1 R3;
+funnum1 = 4;
+pid1 = [SYSTEM_STATUS_TABLE + 1];
+inodeind1 = p;
+call MOD_0;
+alias retvalue2 R0;
+
+if(retvalue2 == -1) then
+return;
+endif;
+ 
+multipop(R0,R1,R2,R3,R4,R5,R6);
+
+if([INODE_TABLE + p*16] == 3)then
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias funnum2 R1;
+alias pid2 R2;
+alias inodeind2 R3;
+funnum2 = 5;
+pid2 = [SYSTEM_STATUS_TABLE + 1];
+inodeind2 = p;
+call MOD_0; 
+multipop(R0,R1,R2,R3,R4,R5,R6);
+
+alias retvalue3 R0;
+retvalue3 = -1;
+return;
+endif;
+
+alias q R5;
+q = 0;
+while(q < 32) do
+if([OPEN_FILE_TABLE + q*4] == -1) then
+break;
+endif;
+q = q + 1;
+endwhile;
+
+
+if(q == 32)then
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias funnum3 R1;
+alias pid3 R2;
+alias inodeind3 R3;
+funnum3 = 5;
+pid3 = [SYSTEM_STATUS_TABLE + 1];
+inodeind3 = p;
+call MOD_0; 
+multipop(R0,R1,R2,R3,R4,R5,R6);
+
+alias retvalue4 R0;
+retvalue4 = -2;
+return;
+endif;
+
+if(file == "root") then
+[OPEN_FILE_TABLE + q*4] = INODE_ROOT;
+
+else
+	if([FILE_STATUS_TABLE + p*4 + 1] == -1) then
+	[FILE_STATUS_TABLE + p*4 + 1] = 1;	
+	else
+	[FILE_STATUS_TABLE + p*4 + 1] = [FILE_STATUS_TABLE + p*4 + 1] + 1;
+	endif;
+[OPEN_FILE_TABLE + q*4] = p;
+endif;
+
+[OPEN_FILE_TABLE + q*4 + 1] = 1;
+[OPEN_FILE_TABLE + q*4 + 2] = 0;
+
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias funnum4 R1;
+alias pid4 R2;
+alias inodeind4 R3;
+funnum4 = 5;
+pid4 = [SYSTEM_STATUS_TABLE + 1];
+//print "kumar";
+//print p;
+inodeind4 = p;
+call MOD_0; 
+multipop(R0,R1,R2,R3,R4,R5,R6);
+
+alias retvalue R0;
+retvalue = q;
+return;
+endif;
+
+if(funnum == 4) then
+alias p R4;
+p = [OPEN_FILE_TABLE + index*4];
+[OPEN_FILE_TABLE + index*4 + 1] = [OPEN_FILE_TABLE + index*4 + 1] - 1;
+
+if([OPEN_FILE_TABLE + index*4 + 1] == 0) then
+[OPEN_FILE_TABLE + index*4] = -1;
+[OPEN_FILE_TABLE + index*4 + 1] = -1;
+[OPEN_FILE_TABLE + index*4 + 2] = -1;
+	if([INODE_TABLE + p*16 + 1] != "root") then
+	[FILE_STATUS_TABLE + p*4 + 1] = [FILE_STATUS_TABLE + p*4 + 1] - 1;
+	endif;
+	if([FILE_STATUS_TABLE + p*4 + 1] == 0) then
+	[FILE_STATUS_TABLE + p*4 + 1] = -1;
+	endif;	
+endif;
+
+return;
+endif;

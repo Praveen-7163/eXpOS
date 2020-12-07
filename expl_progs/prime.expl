@@ -1,0 +1,23 @@
+int main() {
+	decl
+	int num, temp,count1,count2,count3;
+	enddecl
+	begin
+	num = 1;
+	while(num <= 100) do
+		count1 = 1;
+		count2 = 0;
+		while (count1 <= num) do
+			if ((num % count1) == 0) then
+				count2 = count2 + 1;
+			endif;
+			count1 = count1 + 1;
+		endwhile;
+		if(count2 == 2) then
+			temp = exposcall("Write", -2, num);
+		endif;
+		num = num + 1;
+	endwhile;
+	return 0;
+	end
+}

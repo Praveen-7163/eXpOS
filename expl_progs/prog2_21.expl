@@ -1,0 +1,13 @@
+int main()
+{
+decl
+	int temp,n,temp1,temp2,temp3,temp4;
+enddecl
+begin
+	temp=exposcall("Fork");
+	temp1=exposcall("Fork");
+	temp2=exposcall("Fork");
+	temp3=exposcall("Exec","prog1_21.xsm");
+return 0;
+end
+}

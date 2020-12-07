@@ -1,0 +1,66 @@
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 27;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
+//print "aaa";
+alias username R14;
+alias password R15;
+print SP;
+username =  [[PTBR + 2 *((SP - 4)/512)]*512 + (SP - 4)%512];
+password =  [[PTBR + 2 *((SP - 3)/512)]*512 + (SP - 3)%512];
+
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11]*512 - 1;
+
+if([SYSTEM_STATUS_TABLE + 1] != 1) then
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = -2;
+ireturn;
+endif;
+//print "bbb";
+alias p R1;
+p = 0;
+while(p < 16) do
+	if([USER_TABLE + p*2] == username) then
+	break;
+	endif;
+p = p + 1;
+endwhile;
+
+if(p == 16) then
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = -1;
+ireturn;
+endif;
+
+encrypt R15;
+if(password != [USER_TABLE + p*2 + 1]) then
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = -1;
+ireturn;
+endif;
+
+[PROCESS_TABLE + 2*16 + 4] = CREATED;
+[PROCESS_TABLE + 2*16 + 3] = p;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4] = WAIT_PROCESS;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 5] = 2;
+
+[SYSTEM_STATUS_TABLE] = p;
+
+multipush(R0,R1,R2,R3,R4,R5,R6);
+call MOD_5;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+//print "Tarun";
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = 0;
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 13];
+//print SP;
+//print PTBR;
+
+//print [PTBR + 16];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = 0;
+//print "kkk";
+//print SP;
+ireturn;
+

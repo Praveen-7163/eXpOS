@@ -1,0 +1,70 @@
+alias sysnum R1;
+alias userSP R2;
+userSP = SP;
+
+PTBR = [PROCESS_TABLE+[SYSTEM_STATUS_TABLE + 1]*16 + 14];
+sysnum = [[PTBR + 2*((userSP-5)/512)]*512 + (userSP-5)%512];
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = sysnum;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]* 16) + 11]*512 -1;
+
+if(sysnum == 21) then
+if([PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 1] != 1 || [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 3] != 1)then
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = -1;
+ireturn;
+endif;
+
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias funnum1 R1;
+alias pid1 R2;
+alias page1 R3;
+alias block1 R4;
+funnum1 = 1;
+pid1 = [SYSTEM_STATUS_TABLE + 1];
+page1 = 61;
+block1 = 2;
+call MOD_4;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias funnum2 R1;
+alias pid2 R2;
+alias page2 R3;
+alias block2 R4;
+funnum2 = 1;
+pid2 = [SYSTEM_STATUS_TABLE + 1];
+page2 = 59;
+block2 = 3;
+call MOD_4;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias funnum3 R1;
+alias pid3 R2;
+alias page3 R3;
+alias block3 R4;
+funnum3 = 1;
+pid3 = [SYSTEM_STATUS_TABLE + 1];
+page3 = 60;
+block3 = 4;
+call MOD_4;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias funnum4 R1;
+alias pid4 R2;
+alias page4 R3;
+alias block4 R4;
+funnum4 = 1;
+pid4 = [SYSTEM_STATUS_TABLE + 1];
+page4 = 62;
+block4 = 5;
+call MOD_4;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+
+halt;
+endif;
+

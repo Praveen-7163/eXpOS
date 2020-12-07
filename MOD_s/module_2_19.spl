@@ -1,0 +1,97 @@
+alias funnum R1;
+alias relpage R2;
+if(funnum == 1) then
+[SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] + 1;
+while([SYSTEM_STATUS_TABLE + 2] == 0) do
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4] = WAIT_MEM;
+multipush(R0,R1,R2,R3);
+call MOD_5;
+multipop(R0,R1,R2,R3);
+endwhile;
+[SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] - 1;
+[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1;
+alias retvalue R0;
+alias freepage R4;
+freepage = 0;
+while(1) do
+if([MEMORY_FREE_LIST + freepage] == 0) then
+[MEMORY_FREE_LIST + freepage] = 1;
+break;
+endif;
+freepage = freepage + 1;
+endwhile;
+retvalue = freepage;
+//print retvalue;
+return;
+endif;
+
+if(funnum == 2) then
+[MEMORY_FREE_LIST + relpage] =[MEMORY_FREE_LIST + relpage] - 1;
+if([MEMORY_FREE_LIST + relpage] == 0) then
+[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] + 1;
+endif;
+alias p R5;
+p = 0;
+while(p<16) do
+if([PROCESS_TABLE + p*16 + 4] == WAIT_MEM) then
+[PROCESS_TABLE + p*16 + 4] = READY;
+endif;
+p = p + 1;
+endwhile;
+return;
+endif;
+
+if(funnum == 4) then
+[DISK_FREE_LIST + relpage] = [DISK_FREE_LIST + relpage] - 1;
+return;
+endif;
+if(funnum == 5) then
+alias p R3;
+alias q R4;
+alias pagenum R10;
+alias blocknum R11;
+blocknum = relpage;
+alias retvalue R0;
+p = 0;
+while(p < 16) do
+q = 4;
+while(q < 8) do
+if([DISK_MAP_TABLE + p*10 + q] == relpage) then
+break;
+endif;
+q = q + 1;
+endwhile;
+p = p + 1;
+endwhile;
+
+if(p != 16) then
+if([[PROCESS_TABLE + p*16 + 14] + q*2 + 1] == "0100") then
+retvalue = [[PROCESS_TABLE + p*16 + 14] + q*2];
+[MEMORY_FREE_LIST + retvalue] = [MEMORY_FREE_LIST + retvalue] + 1;
+return;
+endif;
+endif;
+
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias funnum1 R1;
+funnum1 = 1;
+call MOD_2;
+alias retvalue1 R0;
+pagenum = retvalue1;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+
+multipush(R0,R1,R2,R3,R4,R5,R6,R10);
+alias funnum2 R1;
+alias currentPID2 R2;
+alias pagenum2 R3;
+alias blocknum2 R4;
+funnum2 = 2;
+currentPID2 = [SYSTEM_STATUS_TABLE + 1];
+pagenum2 = pagenum;
+blocknum2 = blocknum;
+call MOD_4;
+multipop(R0,R1,R2,R3,R4,R5,R6,R10);
+alias retvalue2 R0;
+retvalue2 = pagenum;
+return;
+endif;

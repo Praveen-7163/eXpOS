@@ -1,0 +1,107 @@
+alias userSP R1;
+alias sysnum R2;
+alias file R12;
+userSP = SP;
+//print "eeeee";
+breakpoint;
+
+PTBR = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 14];
+sysnum = [[PTBR + 2*((userSP-5)/512)]*512 + (userSP-5)%512];
+file = [[PTBR + 2*((userSP-4)/512)]*512 + (userSP-4)%512];
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = sysnum;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 13] = SP;
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 11]*512 - 1;
+
+if(sysnum == 2) then
+alias p R4;
+alias q R5;
+
+p = 0;
+q = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 11]*512 + 496;
+
+while(p < 8) do
+if([q + p*2] == -1) then
+break;
+endif;
+p = p + 1;
+endwhile;
+
+//print sysnum;
+//print file;
+//print p;
+if(p == 8) then
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = -3;
+ireturn;
+endif;
+
+multipush(R0,R1,R2,R3,R4,R5,R6,R12);
+alias funnum R1;
+alias filename R2;
+
+funnum = 3;
+filename = file; 
+call MOD_3;
+alias retvalue R0;
+alias index R13;
+index = retvalue;
+//print "ffff";
+print index;
+if(retvalue < 0) then
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = retvalue;
+ireturn;
+endif;
+
+multipop(R0,R1,R2,R3,R4,R5,R6,R12);
+
+[q + p*2] = 0;
+[q + p*2 + 1] = index;
+
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = p;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+//print "gggg";
+ireturn; 
+endif;
+
+if(sysnum == 3) then
+alias p R4;
+alias q R5;
+
+p = file;
+q = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 11]*512 + 496;
+
+if(p>7 || p<0 || [q + p*2] != 0) then
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = -1;
+ireturn;
+endif;
+
+alias oftindex R6;
+oftindex = [q + p*2 + 1];
+
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias funnum R1;
+alias index R3;
+
+funnum = 4;
+index = oftindex; 
+call MOD_3;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+
+[q + p*2] = -1;
+[q + p*2 + 1] = -1;
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = 0;
+ireturn;
+endif;
+
+

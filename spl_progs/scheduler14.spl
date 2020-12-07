@@ -1,0 +1,37 @@
+alias currentPID R0;
+currentPID = [SYSTEM_STATUS_TABLE+1];
+SP=SP+1;
+[SP]=BP;
+alias process_table_entry R1;
+process_table_entry = PROCESS_TABLE + currentPID * 16;
+[process_table_entry + 12] = SP % 512;
+[process_table_entry + 14] = PTBR;
+[process_table_entry + 15] = PTLR;
+alias new_process_table R3;
+alias p R7;
+p=currentPID+1;
+while(p<16) do
+  if(([PROCESS_TABLE+p*16+4])!=TERMINATED) then
+     new_process_table=PROCESS_TABLE+p*16;
+     break;
+ else
+    p=p+1;
+endif;
+endwhile;
+if(p==16) then
+ new_process_table=PROCESS_TABLE;
+ p=0;
+endif;
+SP =  [new_process_table + 11] * 512 + [new_process_table + 12] ;
+PTBR = [new_process_table + 14];
+PTLR = [new_process_table + 15];
+[SYSTEM_STATUS_TABLE+1]=p;
+if([new_process_table + 4] == CREATED) then
+	[new_process_table + 4] = RUNNING;
+       [PROCESS_TABLE+(16*[SYSTEM_STATUS_TABLE+1])+9]=0;
+	SP=[PROCESS_TABLE+(16*[SYSTEM_STATUS_TABLE+1])+13];
+	ireturn;
+endif;
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+ 4] = RUNNING;
+BP=[SP];
+return;

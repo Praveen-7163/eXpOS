@@ -1,0 +1,100 @@
+alias funnum R1;
+alias currentPID R2;
+alias pagenum R3;
+alias blocknum R4;
+
+if(funnum == 1) then
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias reg1 R1;
+alias reg2 R2;
+reg1 = 3;
+reg2 = [SYSTEM_STATUS_TABLE + 1];
+call MOD_0;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+
+[DISK_STATUS_TABLE] = 1; 
+[DISK_STATUS_TABLE + 1] = 1;
+[DISK_STATUS_TABLE + 2] = pagenum;
+[DISK_STATUS_TABLE + 3] = blocknum;
+[DISK_STATUS_TABLE + 4] = [SYSTEM_STATUS_TABLE + 1];
+store(pagenum,blocknum);
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4] = WAIT_DISK;
+multipush(R0,R1,R2,R3,R4,R5);
+call MOD_5;
+multipop(R0,R1,R2,R3,R4,R5);
+return;
+endif;
+
+if(funnum == 2) then
+multipush(R0,R1,R2,R3,R4);
+alias reg1 R1;
+alias reg2 R2;
+reg1 = 3;
+reg2 = [SYSTEM_STATUS_TABLE + 1];
+call MOD_0;
+multipop(R0,R1,R2,R3,R4);
+[DISK_STATUS_TABLE] = 1; 
+[DISK_STATUS_TABLE + 1] = 0;
+[DISK_STATUS_TABLE + 2] = pagenum;
+[DISK_STATUS_TABLE + 3] = blocknum;
+[DISK_STATUS_TABLE + 4] = [SYSTEM_STATUS_TABLE + 1];
+//print pagenum;
+//print blocknum;
+load(pagenum,blocknum);
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4] = WAIT_DISK;
+multipush(R0,R1,R2,R3,R4,R5);
+breakpoint;
+call MOD_5;
+breakpoint;
+multipop(R0,R1,R2,R3,R4,R5);
+return;
+endif;
+
+if (funnum == 3) then
+multipush(R0,R1,R2,R3,R4);
+alias reg1 R1;
+alias reg2 R2;
+reg1 = 8;
+reg2 = [SYSTEM_STATUS_TABLE + 1];
+call MOD_0;
+multipop(R0,R1,R2,R3,R4);
+alias word R3;
+print word;
+multipush(R0,R1,R2,R3,R4);
+alias reg3 R1;
+alias reg4 R2;
+reg3 = 9;
+reg4 = [SYSTEM_STATUS_TABLE+1];
+call MOD_0;
+multipop(R0,R1,R2,R3,R4);
+return;
+endif;
+
+if (funnum == 4) then
+multipush(R0,R1,R2,R3,R4);
+alias reg1 R1;
+alias reg2 R2;
+reg1 = 8;
+reg2 = [SYSTEM_STATUS_TABLE+1];
+call MOD_0;
+multipop(R0,R1,R2,R3,R4);
+breakpoint;
+read;
+breakpoint;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4]=WAIT_TERMINAL;
+breakpoint;
+multipush(R0,R1,R2,R3,R4);
+call MOD_5;
+multipop(R0,R1,R2,R3,R4);
+breakpoint;
+alias reg3 R3;
+alias phyadd R4;
+phyadd = [PTBR + (reg3/512)*2] * 512 + (reg3%512);
+breakpoint;
+[phyadd] = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 8];
+breakpoint;
+return;
+endif;
+
+
+

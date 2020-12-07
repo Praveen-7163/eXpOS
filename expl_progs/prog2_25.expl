@@ -1,0 +1,34 @@
+decl
+    int i, semid, pid, data, temp, filedis, temp1,count;
+    string filename;
+enddecl
+
+int main()
+{
+begin
+    temp = exposcall("Read",-1,filename);
+    filedis = exposcall("Open", filename);
+ 
+
+temp=exposcall("Seek",filedis,2048);
+
+
+count=2000;
+while(count<=2513)do
+temp=exposcall("Write",filedis,count);
+count=count+1;
+endwhile;
+
+temp=exposcall("Seek",filedis,-1);
+
+
+      while(temp!= -2)  do
+            temp1= exposcall("Read",filedis,data);
+            temp1= exposcall("Write",-2,data);
+temp=exposcall("Seek",filedis,-2);
+        endwhile;
+
+    
+    return 0;
+end
+}

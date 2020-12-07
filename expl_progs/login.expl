@@ -1,0 +1,24 @@
+int main()
+{
+decl
+	str username,password;
+	int retvalue,n;
+enddecl
+
+begin
+n = 1;
+	while(n == 1) do
+	read(username);
+	read(password);
+	write(n);
+	retvalue = exposcall("Login",username,password);
+	if(retvalue == -1) then
+	write("Invalid credentials");
+	endif;
+	if(retvalue == -2) then
+	write("Permission denied");
+	endif;
+	endwhile;
+return 0;
+end
+}

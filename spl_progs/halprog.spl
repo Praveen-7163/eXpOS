@@ -1,0 +1,16 @@
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+4]=TERMINATED;
+alias t R0;
+alias p R1;
+t=0;
+p=0;
+while(t<4) do
+   if([PROCESS_TABLE+t*16+4]==TERMINATED) then
+       p=p+1;
+      endif;
+   t=t+1;   
+endwhile;
+if(p==3)  then
+  halt;
+endif;
+call MOD_5; 
+        

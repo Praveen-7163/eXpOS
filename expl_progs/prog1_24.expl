@@ -1,0 +1,21 @@
+int main()
+{
+decl
+str file;
+int n,temp1,temp2,temp3,data;
+enddecl
+
+begin
+read(file);
+temp1 = exposcall("Open",file);
+temp2 = 0;
+n = 8;
+write(n);
+
+	while(temp2 != -2) do
+	temp2 = exposcall("Read",temp1,data);
+	temp3 = exposcall("Write",-2,data);
+	endwhile;
+return 0;
+end
+}

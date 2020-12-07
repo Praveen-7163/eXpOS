@@ -1,0 +1,17 @@
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 13]=SP;
+SP=[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11] * 512 - 1;
+backup;
+[DISK_STATUS_TABLE] = 0;
+alias reg R0;
+reg = 0;
+while(reg < 16) do
+if ([PROCESS_TABLE + reg*16 + 4] == WAIT_DISK) then
+[PROCESS_TABLE + reg*16 + 4] = READY;
+endif;
+reg=reg+1;
+endwhile;
+breakpoint;
+restore;
+SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13];
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1] * 16 + 9]=0;
+ireturn;

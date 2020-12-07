@@ -1,0 +1,85 @@
+alias sysnum R1;
+alias userSP R2;
+userSP = SP;
+
+PTBR = [PROCESS_TABLE+[SYSTEM_STATUS_TABLE + 1]*16 + 14];
+sysnum = [[PTBR + 2*((userSP-5)/512)]*512 + (userSP-5)%512];
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = sysnum;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]* 16) + 11]*512 -1;
+//print "aaaaaaaaaaaaa";
+if(sysnum == 19) then
+alias p R3;
+alias q R4;
+alias semindex R13;
+semindex = [[PTBR + 2*((userSP-4)/512)]*512 + (userSP-4)%512];
+q = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]* 16) + 11]*512 + 496;
+
+//print semindex;
+//print [q + semindex*2];
+//print [SEMAPHORE_TABLE + [q + semindex*2 + 1]*4];
+if([q + semindex*2] != 1 || semindex<0 || semindex>7 ) then
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = -1;
+ireturn;
+endif;
+
+while([SEMAPHORE_TABLE + [q + semindex*2 + 1]*4] != -1) do
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE + 1]*16 + 4] = WAIT_SEMAPHORE;
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE + 1]*16 + 5] = [q + semindex*2 + 1];
+
+multipush(R0,R1,R2,R3,R4,R5,R6);
+call MOD_5;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+endwhile;
+
+[SEMAPHORE_TABLE + [q + semindex*2 + 1]*4] = [SYSTEM_STATUS_TABLE + 1];
+breakpoint;
+endif;
+
+if(sysnum == 20) then
+alias p R3;
+alias q R4;
+alias semindex R13;
+semindex = [[PTBR + 2*((userSP-4)/512)]*512 + (userSP-4)%512];
+q = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]* 16) + 11]*512 + 496;
+
+if([q + semindex*2] != 1 || semindex<0 || semindex>7 ) then
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = -1;
+ireturn;
+endif;
+
+if([SEMAPHORE_TABLE + [q + semindex*2 + 1]*4] != -1) then 
+
+if([SEMAPHORE_TABLE + [q + semindex*2 + 1]*4] != [SYSTEM_STATUS_TABLE + 1]) then
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = -2;
+ireturn;
+endif;
+
+[SEMAPHORE_TABLE + [q + semindex*2 + 1]*4] = -1;
+
+alias r R5;
+r = 0;
+while(r < 16) do
+if([PROCESS_TABLE+r*16 + 4] == WAIT_SEMAPHORE && [PROCESS_TABLE+r*16 + 5] == [q + semindex*2 + 1]) then
+[PROCESS_TABLE+r*16 + 4] = READY;
+[PROCESS_TABLE+r*16 + 5] = -1;
+endif;
+r = r + 1;
+endwhile;
+
+endif;
+breakpoint;
+endif;
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13];
+[[PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512] = 0;
+breakpoint;
+ireturn;

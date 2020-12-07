@@ -1,0 +1,19 @@
+[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13]=SP;
+SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+11]*512-1;
+backup;
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+4]=READY;
+
+//alias reg R0;
+//reg=0;
+//while(reg<3) do
+	//[PROCESS_TABLE+reg*16]=[PROCESS_TABLE+reg*16]+1;
+	//reg=reg+1;
+//endwhile;
+breakpoint;
+call SCHEDULER;
+restore;
+breakpoint;
+SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13];
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9]=0;
+breakpoint;
+ireturn;

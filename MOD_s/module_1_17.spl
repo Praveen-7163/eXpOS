@@ -1,0 +1,64 @@
+alias funnum R1;
+alias currentPID R2;
+if(funnum == 2) then
+multipush(R0,R1,R2,R3);
+alias funnum1 R1;
+alias userpagenum R2;
+funnum1 = 2;
+userpagenum = [PROCESS_TABLE + currentPID * 16 + 11];
+//print funnum1;
+call MOD_2;
+multipop(R0,R1,R2,R3);
+//print currentPID;
+return;
+endif;
+
+if(funnum == 3) then
+multipush(R0,R1,R2,R3);
+alias funnum1 R1;
+alias currentPID1 R2;
+funnum1 = 4;
+currentPID1 = currentPID;
+//print funnum1;
+call MOD_1;
+multipop(R0,R1,R2,R3);
+
+multipush(R0,R1,R2,R3);
+alias funnum2 R1;
+alias currentPID2 R2;
+funnum2 = 2;
+currentPID2 = currentPID;
+//print funnum2;
+call MOD_1;
+multipop(R0,R1,R2,R3);
+[PROCESS_TABLE + currentPID * 16 + 4] = TERMINATED;
+return;
+endif;
+
+if(funnum == 4) then
+alias p R3;
+p = 2;
+PTBR = [PROCESS_TABLE + currentPID*16 + 14];
+[PTBR + 0] = -1;
+[PTBR + 1] = "0000";
+[PTBR + 2] = -1;
+[PTBR + 3] = "0000";
+while(p < 10) do
+if([PTBR + 2*p] != -1) then
+multipush(R0,R1,R2,R3);
+alias funnum3 R1;
+alias pagenum R2;
+funnum3 = 2;
+//print funnum3;
+pagenum = [PTBR + 2*p];
+call MOD_2;
+multipop(R0,R1,R2,R3);
+[PTBR + 2*p] = -1;
+[PTBR + 2*p + 1] ="0000";
+endif;
+p = p + 1;
+endwhile;
+return;
+endif;
+
+

@@ -1,0 +1,116 @@
+breakpoint;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 9;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
+alias userSP R0;
+userSP = SP;
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11]*512 - 1;
+alias file R1;
+PTBR = [PROCESS_TABLE+[SYSTEM_STATUS_TABLE + 1]*16 + 14]; 
+file = [[PTBR + ((userSP - 4)/512)*2] * 512 + ((userSP - 4) % 512)];  
+alias index R6;
+alias p R3;
+p = 0;
+
+while(p < 60) do
+if([INODE_TABLE + 16*p] == 3 && [INODE_TABLE + 16*p + 1] == file) then
+index = p;
+break;
+endif;
+p = p + 1;
+endwhile;
+
+if(p == 60) then
+SP = userSP;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+alias retvalue R0;
+retvalue = -1;
+ireturn;
+endif;
+
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias funnum R1;
+alias currentPID R2;
+funnum = 3;
+currentPID = [SYSTEM_STATUS_TABLE + 1];
+call MOD_1;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+breakpoint;
+alias userpagenum R5;
+userpagenum = [PROCESS_TABLE+[SYSTEM_STATUS_TABLE + 1]*16 + 11];
+[MEMORY_FREE_LIST + userpagenum] = [MEMORY_FREE_LIST + userpagenum] + 1;
+[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1;
+SP = userpagenum * 512 -1;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 4] = RUNNING;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 7] = index;
+PTBR = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 14];
+[PTBR + 0] = 63;
+[PTBR + 1] = "0100";
+[PTBR + 2] = 64;
+[PTBR + 3] = "0100";
+alias q R9;
+q = 2;
+while(q < 10) do
+multipush(R0,R1,R2,R3,R4,R5);
+alias funnum1 R1;
+funnum1 = 1;
+call MOD_2;
+alias retvalue R0;
+[PTBR + q*2] =retvalue;
+[PTBR + q*2 + 1] = "0110";
+multipop(R0,R1,R2,R3,R4,R5);
+if(q == 3) then
+q = q + 5;
+else
+q = q + 1;
+endif;
+endwhile;
+alias r R7;
+r = 0;
+alias s R8;
+s = 0;
+while(r < 4) do
+if([INODE_TABLE + 16*index + 8 + r] != -1) then
+s = s + 1;
+endif;
+r = r + 1;
+endwhile;
+
+q = 4;
+while(s >= 0) do
+multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9);
+alias funnum2 R1;
+funnum2 = 1;
+call MOD_2;
+alias retvalue R0;
+[PTBR + (q*2)] =retvalue;
+[PTBR + (q*2) + 1] = "0100";
+multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9);
+q = q + 1;
+s = s - 1;
+endwhile;
+while(q < 8)  do
+[PTBR + q*2] = -1;
+[PTBR + q*2 + 1] = "0000";
+q = q + 1;
+endwhile;
+
+//loadi([PTBR + 8],70);
+multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9);
+alias funnum3 R1;
+alias currentPID3 R2;
+alias pagenum R3;
+alias blocknum R4;
+funnum3 = 2;
+currentPID3 = [SYSTEM_STATUS_TABLE + 1];
+pagenum = [PTBR + 8];
+blocknum = [INODE_TABLE + INDEX*16 + 8];
+breakpoint;
+call MOD_4;
+breakpoint;
+multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9);
+
+breakpoint;
+[[PTBR + 16] * 512] = [[PTBR + 8] * 512 + 1];
+SP = 8 * 512;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+ireturn;

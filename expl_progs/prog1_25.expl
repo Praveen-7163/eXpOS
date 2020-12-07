@@ -1,0 +1,33 @@
+int main()
+{
+decl 
+int permi,temp,fd,count,temp1,data,n,m;
+string name,num;
+enddecl
+begin
+n = 9;
+m = 10;
+temp= exposcall("Read",-1,name);
+temp= exposcall("Read",-1,permi);
+temp =exposcall("Create",name,permi);
+
+fd=exposcall("Open",name);
+write(n);
+count=1;
+while(count<=5)do
+temp=exposcall("Write",fd,count);
+count=count+1;
+endwhile;
+//write(m);
+temp=exposcall("Seek",fd,-1);
+while(temp!=-2)do
+	
+ 	 temp1 = exposcall("Read",fd,data);
+         temp1= exposcall("Write",-2,data);
+temp=exposcall("Seek",fd,-2);
+endwhile;
+
+return 0;
+end
+
+}

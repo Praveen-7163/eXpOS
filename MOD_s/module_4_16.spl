@@ -1,0 +1,47 @@
+alias funnum R1;
+alias currentPID R2;
+if (funnum == 3) then
+multipush(R1,R2,R3);
+alias reg1 R1;
+alias reg2 R2;
+reg1 = 8;
+reg2 = [SYSTEM_STATUS_TABLE+1];
+call MOD_0;
+multipop(R1,R2,R3);
+alias word R3;
+print word;
+multipush(R1,R2,R3);
+alias reg3 R1;
+alias reg4 R2;
+reg3 = 9;
+reg4 = [SYSTEM_STATUS_TABLE+1];
+call MOD_0;
+multipop(R1,R2,R3);
+return;
+endif;
+
+if (funnum == 4) then
+multipush(R1,R2,R3);
+alias reg1 R1;
+alias reg2 R2;
+reg1 = 8;
+reg2 = [SYSTEM_STATUS_TABLE+1];
+call MOD_0;
+multipop(R1,R2,R3);
+read;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4]=WAIT_TERMINAL;
+multipush(R1,R2,R3);
+call MOD_5;
+multipop(R1,R2,R3);
+alias reg3 R3;
+alias phyadd R4;
+phyadd = [PTBR + (reg3/512)*2] * 512 + (reg3%512);
+breakpoint;
+[phyadd] = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 8];
+//print [phyadd];
+breakpoint;
+return;
+endif;
+
+
+

@@ -1,0 +1,60 @@
+alias sysnum R1;
+alias userSP R2;
+userSP = SP;
+
+PTBR = [PROCESS_TABLE+[SYSTEM_STATUS_TABLE + 1]*16 + 14];
+sysnum = [[PTBR + 2*((userSP-5)/512)]*512 + (userSP-5)%512];
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = sysnum;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]* 16) + 11]*512 -1;
+
+if(sysnum == 13) then
+alias pid R3;
+pid = [[PTBR + 2*((userSP-4)/512)]*512 + (userSP-4)%512];
+
+if(pid == [SYSTEM_STATUS_TABLE + 1] || [PROCESS_TABLE+ pid*16 + 4] == TERMINATED || pid<0 || pid>15) then
+alias retvalue R0;
+retvalue = -1;
+[[PTBR + 2*((userSP-1)/512)]*512 + (userSP-1)%512] = retvalue; 
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 13];
+ireturn;
+endif;
+
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE + 1]*16 + 4] = WAIT_PROCESS;
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE + 1]*16 + 5] = pid;
+multipush(R0,R1,R2,R3,R4,R5);
+call MOD_5;
+multipop(R0,R1,R2,R3,R4,R5);
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+[[PTBR + 2*((userSP-1)/512)]*512 + (userSP-1)%512] = 0; 
+endif;
+
+if(sysnum == 14) then
+alias p R4;
+p = 0;
+while(p < 16) do
+if([PROCESS_TABLE + p*16 + 4] == WAIT_PROCESS && [PROCESS_TABLE + p*16 + 5] == [SYSTEM_STATUS_TABLE + 1]) then
+[PROCESS_TABLE + p*16 + 4] = READY;
+[PROCESS_TABLE + p*16 + 5] = -1;
+endif;
+p = p + 1;
+endwhile;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+[[PTBR + 2*((userSP-1)/512)]*512 + (userSP-1)%512] = 0; 
+endif;
+
+if(sysnum == 11) then
+[[PTBR + 2*((userSP-1)/512)]*512 + (userSP-1)%512] = [SYSTEM_STATUS_TABLE + 1]; 
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;
+endif;
+
+if(sysnum == 12) then
+[[PTBR + 2*((userSP-1)/512)]*512 + (userSP-1)%512] = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 2]; 
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = 0;
+endif;
+
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 13];
+ireturn;
+

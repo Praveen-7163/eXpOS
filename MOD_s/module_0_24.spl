@@ -1,0 +1,177 @@
+alias funnum R1;
+alias currentPID R2;
+alias semid R3;
+
+if(funnum == 1) then
+alias bufnum R4;
+bufnum = semid;
+
+while([BUFFER_TABLE + bufnum*4 + 2] != -1) do
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4] = WAIT_BUFFER;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 5] = bufnum;
+multipush(R0,R1,R2,R3,R4,R5,R6);
+call MOD_5;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+endwhile;
+[BUFFER_TABLE + bufnum*4 + 2] = [SYSTEM_STATUS_TABLE + 1];
+return;
+endif;
+
+if(funnum == 2) then
+alias bufnum R4;
+bufnum = semid;
+if([BUFFER_TABLE + bufnum*4 + 2] != currentPID) then
+alias retvalue1 R0;
+retvalue1 = -1;
+return;
+endif;
+[BUFFER_TABLE + bufnum*4 + 2] = -1;
+
+alias p R5;
+p = 0;
+while(p < 16) do
+if([PROCESS_TABLE + p*16 + 4] == WAIT_BUFFER && [PROCESS_TABLE + p*16 + 5] == bufnum) then
+[PROCESS_TABLE + p*16 + 4] = READY;
+[PROCESS_TABLE + p*16 + 5] = -1;
+endif;
+p = p + 1;
+endwhile;
+
+alias retvalue R0;
+retvalue = 0;
+return;
+endif;
+
+if(funnum == 3) then
+while([DISK_STATUS_TABLE] == 1) do
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4] = WAIT_DISK;
+multipush(R0,R1,R2,R3,R4,R5,R6);
+call MOD_5;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+endwhile;
+[DISK_STATUS_TABLE] = 1;
+[DISK_STATUS_TABLE + 4] = currentPID;
+return;
+endif;
+
+if(funnum == 4) then
+alias index R4;
+index = semid;
+//print index;
+//print "ffffff";
+while([FILE_STATUS_TABLE + index*4] != -1) do
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4] = WAIT_FILE;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 5] = index; 
+multipush(R0,R1,R2,R3,R4,R5,R6);
+call MOD_5;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+endwhile;
+
+alias retvalue R0;
+if([INODE_TABLE + index*16] == -1) then
+retvalue = -1;
+else
+[FILE_STATUS_TABLE + index*4] = [SYSTEM_STATUS_TABLE + 1];
+retvalue = 0;
+endif;
+return;
+endif;
+
+if(funnum == 5) then
+alias retvalue R0;
+alias index R4;
+alias p R5;
+index = semid;
+if([FILE_STATUS_TABLE + index*4] != currentPID) then
+retvalue = -1;
+
+else
+[FILE_STATUS_TABLE + index*4] = -1;
+p = 0;
+
+while(p < 16) do
+if([PROCESS_TABLE + p*16 + 4] == WAIT_FILE && [PROCESS_TABLE + p*16 + 5] == index) then
+[PROCESS_TABLE + p*16 + 4] = READY;
+[PROCESS_TABLE + p*16 + 5] = -1;
+endif;
+p = p + 1;
+endwhile;
+
+retvalue = 0;
+endif;
+
+return;
+endif;
+
+if(funnum == 6) then
+alias p R4;
+p = 0;
+while(p < 32) do
+if([SEMAPHORE_TABLE + p*4 + 1] == 0) then
+break;
+endif;
+p = p + 1;
+endwhile;
+
+alias retvalue R0;
+if(p == 32) then
+retvalue = -1;
+else
+[SEMAPHORE_TABLE + p*4] = -1;
+[SEMAPHORE_TABLE + p*4 + 1] = 1;
+retvalue = p;
+endif;
+return;
+endif;
+
+if(funnum == 7) then
+alias q R4;
+q = [[PROCESS_TABLE + currentPID*16 + 11]*512 + 496 + semid*2 + 1];
+if([SEMAPHORE_TABLE + q*4] == currentPID) then
+[SEMAPHORE_TABLE + q*4] = -1;
+
+alias p R5;
+p = 0;
+while(p < 16) do
+if([PROCESS_TABLE + p*16 + 4] == WAIT_SEMAPHORE && [PROCESS_TABLE + p*16 + 5] == q) then
+[PROCESS_TABLE + p*16 + 4] = READY;
+endif;
+p = p + 1;
+endwhile;
+endif;
+
+[SEMAPHORE_TABLE + q*4 + 1] = [SEMAPHORE_TABLE + q*4 + 1] - 1;
+return;
+endif;
+
+
+if (funnum == 8) then
+while([TERMINAL_STATUS_TABLE] == 1) do
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 4] = WAIT_TERMINAL;
+multipush(R1,R2,R3,R4,R5,R6);
+call MOD_5; 
+multipop(R1,R2,R3,R4,R5,R6);
+endwhile;
+[TERMINAL_STATUS_TABLE] = 1;
+[TERMINAL_STATUS_TABLE + 1] = currentPID;
+return;
+endif;
+
+if (funnum == 9) then
+alias reg R0;
+if(currentPID == [TERMINAL_STATUS_TABLE + 1]) then
+[TERMINAL_STATUS_TABLE] = 0;
+alias p R4;
+p = 0;
+while (p < 16) do
+if([PROCESS_TABLE + p * 16 + 4] == WAIT_TERMINAL) then
+[PROCESS_TABLE + p * 16 + 4]=READY;
+endif;
+p = p + 1;
+endwhile;
+reg = 0;
+return;
+endif;
+reg = -1;
+return;
+endif;

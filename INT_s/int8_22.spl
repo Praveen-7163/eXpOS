@@ -1,0 +1,142 @@
+breakpoint;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 8;
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13] = SP;
+alias userSP R14;
+userSP = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]* 16) + 11]*512 -1;
+
+multipush(R0,R1,R2,R3,R4,R5,R6,R7);
+alias funnum R1;
+funnum = 1;
+call MOD_1;
+alias retvalue R0;
+alias chPID R13;
+chPID = retvalue;
+//if(retvalue == -1) then
+//[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+//SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13];
+//[[PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE + 1]*20 + 2*((SP-1)/512)]*512 + ((SP-1)%512)] = -1;
+//ireturn;
+//endif;
+multipop(R0,R1,R2,R3,R4,R5,R6,R7);
+//print chPID;
+breakpoint;
+PTBR = PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE + 1]*20; 
+alias p R7;
+if([PTBR + 4] == -1) then
+p = 2;
+while(p < 4) do
+multipush(R0,R1,R2,R3,R4,R5,R6,R7);
+alias funnum2 R1;
+funnum2 = 1;
+call MOD_2;
+alias retvalue R0;
+//print retvalue;
+[PTBR + p*2] = retvalue;
+[PTBR + p*2 + 1] = "0110";
+multipop(R0,R1,R2,R3,R4,R5,R6,R7);
+p = p + 1;
+endwhile;
+endif;
+breakpoint;
+alias chPTBR R6;
+chPTBR = PAGE_TABLE_BASE + chPID*20; 
+p = 8;
+while(p < 10) do
+multipush(R0,R1,R2,R3,R4,R5,R6,R7);
+alias funnum2 R1;
+
+funnum2 = 1;
+call MOD_2;
+alias retvalue R0;
+//print retvalue;
+[chPTBR + p*2] = retvalue;
+[chPTBR + p*2 + 1] = "0110";
+multipop(R0,R1,R2,R3,R4,R5,R6,R7);
+p = p + 1;
+endwhile;
+breakpoint;
+multipush(R0,R1,R2,R3,R4,R5,R6,R7);
+alias funnum2 R1;
+funnum2 = 1;
+call MOD_2;
+alias retvalue1 R0;
+//print retvalue1;
+[PROCESS_TABLE + chPID*16 + 11] = retvalue1;
+multipop(R0,R1,R2,R3,R4,R5,R6,R7);
+
+//print chPID;
+//print [SYSTEM_STATUS_TABLE + 1];
+breakpoint;
+alias w R8;
+alias x R9;
+w = PROCESS_TABLE + chPID*16;
+x = PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16; 
+[w + 0] = 0;
+[w + 1] = chPID;
+[w + 2] = [SYSTEM_STATUS_TABLE + 1];
+[w + 3] = [x + 3];
+[w + 4] = CREATED;
+[w + 6] = [x + 6];
+[w + 7] = [x + 7];
+[w + 9] = 0; 
+[w + 10] = [x + 10];
+[w + 12] = 0;
+[w + 13] = [x + 13];
+//[PROCESS_TABLE + chPID*16 + 15] = PTBR;
+//[PROCESS_TABLE + chPID*16 + 14] = PTLR;
+p = 0;
+//print chPID;
+breakpoint;
+w = DISK_MAP_TABLE + chPID*10;
+x = DISK_MAP_TABLE + [SYSTEM_STATUS_TABLE + 1]*10; 
+while(p < 10) do
+[w + p] = [x + p];
+p = p + 1;
+endwhile;
+
+p = 0;
+w = [PROCESS_TABLE + chPID*16 + 11]*512 + 496;
+x = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 11]*512 + 496;
+while(p < 8) do
+[w + 2*p] = [x + 2*p];
+[w + 2*p + 1] = 1;
+if([x + 2*p] == 1) then
+[SEMAPHORE_TABLE + [x + 2*p + 1]*4 + 1] = [SEMAPHORE_TABLE + [x + 2*p + 1]*4 + 1] + 1; 
+endif;
+p = p + 1;
+endwhile;
+
+p = 0;
+w = PAGE_TABLE_BASE + chPID*20;
+x = PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE + 1]*20;
+while(p < 8) do
+[w + 2*p] = [x + 2*p];
+[w + 2*p + 1] = [x + 2*p + 1];
+if(p>=2 && p<=7) then
+[MEMORY_FREE_LIST + [w + 2*p]] = [MEMORY_FREE_LIST + [w + 2*p]] + 1;
+endif;
+p = p + 1;
+endwhile;
+
+p = 0;
+while(p < 512) do
+[[w + 16]*512 + p] = [[x + 16]*512 + p];
+[[w + 18]*512 + p] = [[x + 18]*512 + p]; 
+p = p + 1;
+endwhile;
+    
+SP = [PROCESS_TABLE + (chPID* 16) + 11]*512;
+[SP] = BP;
+
+SP = [PROCESS_TABLE + chPID*16 + 13];
+[[PAGE_TABLE_BASE + chPID*20 + 2*((SP-1)/512)]*512 + ((SP-1)%512)] = 0;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;
+SP = userSP;
+[[PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE + 1]*20 + 2*((userSP-1)/512)]*512 + ((userSP-1)%512)] = chPID;
+breakpoint;
+ireturn;
+
+

@@ -1,0 +1,22 @@
+alias funnum R1;
+alias currentPID R2;
+if (funnum == 3) then
+multipush(R1,R2,R3);
+alias reg1 R1;
+alias reg2 R2;
+reg1 = 8;
+reg2 = [SYSTEM_STATUS_TABLE+1];
+call MOD_0;
+multipop(R1,R2,R3);
+alias word R3;
+print word;
+multipush(R1,R2,R3);
+alias reg3 R1;
+alias reg4 R2;
+reg3 = 9;
+reg4 = [SYSTEM_STATUS_TABLE+1];
+call MOD_0;
+multipop(R1,R2,R3);
+endif;
+return;
+

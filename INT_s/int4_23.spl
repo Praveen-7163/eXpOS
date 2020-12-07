@@ -1,0 +1,207 @@
+alias sysnum R1;
+alias userSP R10;
+alias ret R11;
+alias file R3;
+alias permission R4;
+alias pte R9;
+userSP = SP;
+breakpoint;
+pte = PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16;
+PTBR = [pte + 14];
+ret = [[PTBR + 2*((userSP-1)/512)]*512 + (userSP-1)%512];
+
+sysnum = [[PTBR + 2*((userSP-5)/512)]*512 + (userSP-5)%512];
+file = [[PTBR + 2*((userSP-4)/512)]*512 + (userSP-4)%512];
+permission = [[PTBR + 2*((userSP-3)/512)]*512 + (userSP-3)%512];
+
+[pte + 9] = sysnum;
+[pte + 13] = SP;
+SP = [pte + 11]*512 -1;
+
+//print sysnum;
+//print file;
+
+if(sysnum == 1) then
+alias p R5;
+p = 0;
+while(p < 60) do
+if([INODE_TABLE + 16*p + 1] == file) then
+[pte + 9] = 0;
+SP = userSP;
+ret = 0;
+ireturn;
+endif;
+p = p + 1;
+endwhile;
+
+breakpoint;
+
+p = 0;
+while(p < 60) do
+if([INODE_TABLE + 16*p] == -1) then
+break;
+endif;
+p = p + 1;
+endwhile;
+
+//print p;
+breakpoint;
+
+if(p == 60) then
+[pte + 9] = 0;
+SP = userSP;
+ret = -1;
+ireturn;
+endif;
+
+alias ite R12;
+alias rfe R13;
+ite = INODE_TABLE + 16*p;
+rfe = ROOT_FILE + p*8;  
+[ite] = 2;
+[ite + 1] = file;
+[ite + 2] = 0;
+[ite + 3] = [pte + 3];
+[ite + 4] = permission;
+
+[rfe] = file;
+[rfe + 1] = 0;
+[rfe + 2] = 2;
+[rfe + 3] = [USER_TABLE + [INODE_TABLE + 16*p + 3]*2];
+[rfe + 4] = permission;
+
+[pte + 9] = 0;
+SP = userSP;
+ret = 0;
+ireturn;
+endif;
+
+if(sysnum == 4) then
+//print file;
+alias p R5;
+p = 0;
+while(p < 60) do
+if([INODE_TABLE + 16*p + 1] == file) then
+break;
+endif;
+p = p + 1;
+endwhile;
+//print "ppppp";
+//print p;
+if(p == 60) then
+[pte + 9] = 0;
+SP = userSP;
+ret = 0;
+ireturn;
+endif;
+//print "Tarun";
+if([INODE_TABLE + p*16] != 2) then
+[pte + 9] = 0;
+SP = userSP;
+ret = -1;
+ireturn;
+endif;
+
+if([INODE_TABLE + p*16 + 4] == 0) then
+     if([INODE_TABLE + p*16 + 3] != 1 && [INODE_TABLE + p*16 + 3] != [pte + 3]) then
+	[pte + 9] = 0;
+	SP = userSP;
+	ret = -1;
+	ireturn;
+     endif;
+endif;
+//print "tarun";
+multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11);
+alias funnum R1;
+alias pid R2;
+alias index R3;
+funnum =4;
+pid = [SYSTEM_STATUS_TABLE + 1];
+index = p;
+call MOD_0;
+multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11);
+
+//print [FILE_STATUS_TABLE + p*4 + 1];
+//print p; 
+if([FILE_STATUS_TABLE + p*4 + 1] != -1) then
+multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11);
+alias funnum1 R1;
+alias pid1 R2;
+alias index1 R3;
+funnum1 =5;
+pid1 = [SYSTEM_STATUS_TABLE + 1];
+index1 = p;
+call MOD_0;
+multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11);
+
+[pte + 9] = 0;
+SP = userSP;
+ret = -2;
+ireturn;
+endif;
+
+alias q R6;
+q = 8;
+while(q < 12) do
+alias r R7;
+r = 0;
+while(r < 4) do
+	if([INODE_TABLE + p*16 + q] == [BUFFER_TABLE + r*4] && [BUFFER_TABLE + r*4 + 1] == 1) then
+	[BUFFER_TABLE + r*4 + 1] = 0;
+
+	[DISK_FREE_LIST + [BUFFER_TABLE + r*4]] = [DISK_FREE_LIST + [BUFFER_TABLE + r*4]] - 1;
+
+	//multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11);
+	//alias funnum2 R1;
+	//alias block R2;
+	//funnum2 = 4;
+	//block = [INODE_TABLE + p*16 + q];
+	//call MOD_2;
+	//multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11);
+
+	break;
+	endif;
+r = r + 1;
+endwhile;
+q = q + 1;
+endwhile;
+
+alias s R8;
+s = 0;
+while(s < 16) do
+[INODE_TABLE + p*16 + s] = -1;
+s = s + 1;
+endwhile;
+[INODE_TABLE + p*16 + 2] = -1;
+
+s = 0;
+while(s < 8) do
+[ROOT_FILE + p*8 + s] = -1;
+s = s + 1;
+endwhile;
+[ROOT_FILE + p*8 + 2] = 0;
+
+multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11);
+alias funnum2 R1;
+alias pid2 R2;
+alias index2 R3;
+funnum2 =5;
+pid2 = [SYSTEM_STATUS_TABLE + 1];
+index2 = p;
+call MOD_0;
+multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11);
+
+//print p;
+
+[pte + 9] = 0;
+SP = userSP;
+ret = 0;
+ireturn;
+endif;
+
+
+
+
+
+
+

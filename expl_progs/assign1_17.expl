@@ -1,0 +1,17 @@
+int main()
+{
+decl
+	int temp,temp1,temp2,num;
+	str file;
+enddecl
+begin
+     num=1;
+	temp2 = exposcall("Read",-1,file);
+	while(num<=100) do
+	     temp=exposcall("Write",-2,num);
+	     num=num+2;
+	endwhile;
+	temp1 = exposcall("Exec",file);
+	return 0;
+end
+}

@@ -1,0 +1,198 @@
+alias ret R11;
+alias pte R12;
+ret = [PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512;
+pte = PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16; 
+[pte + 13] = SP;
+
+alias username R14;
+alias password R15;
+username =  [[PTBR + 2 *((SP - 4)/512)]*512 + (SP - 4)%512];
+password =  [[PTBR + 2 *((SP - 3)/512)]*512 + (SP - 3)%512];
+
+alias sysnum R13;
+sysnum =  [[PTBR + 2 *((SP - 5)/512)]*512 + (SP - 5)%512];
+
+[pte + 9] = sysnum;
+
+SP = [pte + 11]*512 - 1;
+
+if(sysnum == 22) then
+
+if([pte + 1] != 2 || [pte + 3] != 1)then
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = -2;
+ireturn;
+endif;
+
+alias p R1;
+p = 0;
+while(p < 16) do
+	if([USER_TABLE + p*2] == username) then
+	break;
+	endif;
+p = p + 1;
+endwhile;
+
+if(p != 16) then
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = -1;
+ireturn;
+endif;
+
+p = 0;
+while(p < 16) do
+	if([USER_TABLE + p*2] == -1) then
+	break;
+	endif;
+p = p + 1;
+endwhile;
+
+if(p == 16) then
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = -3;
+ireturn;
+endif;
+
+encrypt R15;
+[USER_TABLE + p*2] = username;
+[USER_TABLE + p*2 + 1] = password;
+
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = 0;
+ireturn;
+endif;
+
+if(sysnum == 23) then
+
+if([pte + 1] != 2 || [pte + 3] != 1 || username == "root" || username == "kernel")then
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = -2;
+ireturn;
+endif;
+
+alias p R1;
+p = 0;
+while(p < 16) do
+	if([USER_TABLE + p*2] == username) then
+	break;
+	endif;
+p = p + 1;
+endwhile;
+
+if(p == 16) then
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = -1;
+ireturn;
+endif;
+
+alias q R2;
+q = 0;
+while(q < 60) do
+	if([ROOT_FILE + q*8 + 3] == p) then
+
+	[pte + 9] = 0;
+	SP = [pte + 13];
+	[ret] = -3;
+	ireturn;
+	endif;
+
+q = q + 1;
+endwhile;
+
+[USER_TABLE + p*2] = -1;
+[USER_TABLE + p*2 + 1] = -1;
+
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = 0;
+ireturn;
+endif;
+
+if(sysnum == 24) then
+
+if([SYSTEM_STATUS_TABLE + 1] != 2) then
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = -1;
+ireturn;
+endif;
+
+alias p R1;
+p = 0;
+while(p < 16) do
+	if([USER_TABLE + p*2] == username) then
+	break;
+	endif;
+p = p + 1;
+endwhile;
+
+if(p == 16) then
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = -2;
+ireturn;
+endif;
+
+if([pte + 3] != p) then
+	if([pte + 3] != 1)then
+	[pte + 9] = 0;
+	SP = [pte + 13];
+	[ret] = -1;
+	ireturn;
+	endif;
+endif;
+
+encrypt R15;
+[USER_TABLE + p*2 + 1] = password;
+
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = 0;
+ireturn;
+endif;
+
+if(sysnum == 26) then
+alias p R1;
+p = 0;
+while(p < 16) do
+	if([USER_TABLE + p*2] == username) then
+	break;
+	endif;
+p = p + 1;
+endwhile;
+
+if(p == 16) then
+[ret] = -1;
+else
+[ret] = p;
+endif;
+
+[pte + 9] = 0;
+SP = [pte + 13];
+ireturn;
+endif;
+
+if(sysnum == 25) then
+alias userid R1;
+userid = username;
+
+if(userid < 0 || userid > 15 || [USER_TABLE + userid*2] == -1) then
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = -1;
+ireturn;
+endif;
+
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = [USER_TABLE + userid*2];
+ireturn;
+endif;
+
+

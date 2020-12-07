@@ -1,0 +1,19 @@
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 13]=SP;
+SP=[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11] * 512 - 1;
+backup;
+alias process_table_entry R0;
+process_table_entry = PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1] * 16;
+[process_table_entry + 4] = READY;
+//process_table_entry=PROCESS_TABLE;
+//alias reg R2;
+//reg=0;
+//while(reg < 16) do
+//[PROCESS_TABLE + reg*16]=[PROCESS_TABLE + reg*16] + 1;
+//reg=reg+1;
+//endwhile;
+call MOD_5;
+restore;
+SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13];
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1] * 16 + 9]=0;
+ireturn;
+

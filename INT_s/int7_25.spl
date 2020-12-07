@@ -1,0 +1,165 @@
+breakpoint;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 5;
+
+alias userSP R1;
+alias pte R10;
+alias ret R15;
+userSP = SP;
+ret = [PTBR + 2*((SP-1)/512)]*512 + (SP-1)%512;
+pte = PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16;
+
+[pte + 13] = SP;
+SP = [pte + 11]*512 -1;
+
+PTBR = [pte + 14];
+alias fileid R2;
+fileid = [[PTBR + 2 *((userSP - 4)/512)]*512 + (userSP - 4)%512];
+
+if(fileid != -2) then
+alias p R3;
+alias q R4;
+q = [pte + 11]*512 + 496;
+p = 0;
+
+if([q + fileid*2] != 0 || fileid<0 || fileid>7 ) then
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = -1;
+ireturn;
+endif;
+//print "eeee";
+alias often R7;
+alias inodein R13;
+often = [q + fileid*2 + 1];
+inodein = [OPEN_FILE_TABLE + often*4];
+
+if([pte + 3] != 1 && [pte + 3] != [INODE_TABLE + inodein*16 + 3] && [INODE_TABLE + inodein*16 + 4] == 0) then
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = -3;
+ireturn;
+endif;
+
+multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R12,R13,R15);
+alias funnum1 R1;
+alias pid1 R2;
+alias index1 R3;
+funnum1 = 4;
+pid1 = [SYSTEM_STATUS_TABLE + 1];
+index1 = inodein;
+call MOD_0;
+alias retvalue1 R0;
+
+//print "Tarun";
+breakpoint;
+
+if(retvalue1 == -1) then
+[pte + 9] = 0;
+SP = [pte + 13];
+[ret] = -1;
+ireturn;
+endif;
+multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R12,R13,R15);
+
+alias lseek R8;
+lseek = [OPEN_FILE_TABLE + often*4 + 2];
+
+if(lseek == 2048) then
+	multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R12,R13,R15);
+	alias funnum2 R1;
+	alias pid2 R2;
+	alias index2 R3;
+	funnum2 = 5;
+	pid2 = [SYSTEM_STATUS_TABLE + 1];
+	index2 = inodein;
+	call MOD_0; 
+	multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R12,R13,R15);
+
+	[pte + 9] = 0;
+	SP = [pte + 13];
+	[ret] = -2;
+	ireturn;
+	endif;
+//print "kkk";
+
+if(lseek%512 == 0 && lseek == [INODE_TABLE + inodein*16 + 2]) then
+//print "lll";
+	multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R13,R15);
+	alias funnum3 R1;
+	funnum3 = 3;
+	call MOD_2; 
+	alias retvalue2 R0;
+	alias retbl R12;
+	retbl = retvalue2;
+//print retbl;
+	if(retvalue2 == -1) then
+	[pte + 9] = 0;
+	SP = [pte + 13];
+	[ret] = -2;
+	ireturn;
+	endif;	
+
+	multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R13,R15);
+
+[INODE_TABLE + inodein*16 + 8 + (lseek/512)] = retbl;
+endif;
+
+//print "bbbb";
+multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R13,R15);
+alias funnum4 R1;
+alias block R4;
+alias offset R5;
+alias word R6;
+
+funnum4 = 1;
+block = [INODE_TABLE + inodein*16 + 8 + (lseek/512)];
+offset = lseek%512;
+word = [[PTBR + 2 * (([pte + 13] - 3)/512)]*512 + ([pte + 13] - 3) %512];
+//print word;
+//print "tarun";
+call MOD_3;
+multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R13,R15);
+
+if([INODE_TABLE + inodein*16 + 2] == lseek) then
+[INODE_TABLE + inodein*16 + 2] = [INODE_TABLE + inodein*16 + 2] + 1;
+[ROOT_FILE + inodein*8 + 2] = [ROOT_FILE + inodein*8 + 2] + 1;
+endif;
+
+[OPEN_FILE_TABLE + often*4 + 2] = [OPEN_FILE_TABLE + often*4 + 2] + 1;
+	multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R13,R15);
+	alias funnum5 R1;
+	alias pid5 R2;
+	alias index5 R3;
+	funnum5 = 5;
+	pid5 = [SYSTEM_STATUS_TABLE + 1];
+	index5 = inodein;
+	call MOD_0; 
+	multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R13,R15);
+//print "kkk";
+	[pte + 9] = 0;
+	SP = [pte + 13];
+	[ret] = 0;
+	ireturn;
+
+else
+	alias word R7;
+	word = [[PTBR + 2 * ((userSP - 3)/512)]*512 + ((userSP - 3) %512)];
+
+	//print word;
+multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10);
+alias reg1 R1;
+alias reg2 R2;
+alias reg3 R3;
+reg1 = 3;
+reg2 = [SYSTEM_STATUS_TABLE+1];
+reg3 = word;
+call MOD_4;
+multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10);
+
+	SP = [pte + 13];
+	[ret] = 0;
+	
+	[pte + 9] = 0;
+ireturn;
+endif;
+

@@ -1,0 +1,130 @@
+breakpoint;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 9;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
+alias userSP R0;
+userSP =SP;
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11]*512 - 1;
+alias file R1;
+PTBR = [PROCESS_TABLE+[SYSTEM_STATUS_TABLE + 1]*16 + 14]; 
+file = [[PTBR + ((userSP - 4)/512)*2] * 512 + ((userSP - 4) % 512)];  
+alias index R6;
+alias p R3;
+p = 0;
+
+while(p < 60) do
+if([INODE_TABLE + 16*p] == 3 && [INODE_TABLE + 16*p + 1] == file) then
+index = p;
+break;
+endif;
+p = p + 1;
+endwhile;
+//print p;
+if(p == 60) then
+SP = userSP;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+alias retvalue R0;
+retvalue = -1;
+ireturn;
+endif;
+breakpoint;
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias funnum R1;
+alias currentPID R2;
+funnum = 3;
+currentPID = [SYSTEM_STATUS_TABLE + 1];
+call MOD_1;
+multipop(R0,R1,R2,R3,R4,R5,R6);
+breakpoint;
+alias userpagenum R5;
+userpagenum = [PROCESS_TABLE+[SYSTEM_STATUS_TABLE + 1]*16 + 11];
+[MEMORY_FREE_LIST + userpagenum] = [MEMORY_FREE_LIST + userpagenum] + 1;
+[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1;
+SP = userpagenum * 512 -1;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 4] = RUNNING;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 7] = index;
+PTBR = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 14];
+[PTBR + 0] = 63;
+[PTBR + 1] = "0100";
+[PTBR + 2] = 64;
+[PTBR + 3] = "0100";
+[PTBR + 4] = -1;
+[PTBR + 5] = "0000";
+[PTBR + 6] = -1;
+[PTBR + 7] = "0000";
+
+alias q R10;
+q = 8;
+//print q;
+while(q < 10) do
+multipush(R0,R1,R2,R3,R4,R5,R6);
+alias funnum1 R1;
+funnum1 = 1;
+call MOD_2;
+alias retvalue R0;
+[PTBR + q*2] =retvalue;
+[PTBR + q*2 + 1] = "0110";
+//print q;
+//print retvalue;
+//print "stack";
+multipop(R0,R1,R2,R3,R4,R5,R6);
+//print q;
+q = q + 1;
+endwhile;
+
+multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10);
+alias funnum4 R1;
+alias blocknum R2;
+funnum4 = 5;
+blocknum = [INODE_TABLE + 16*index + 8];
+call MOD_2;
+alias retvalue R0;
+//print retvalue;
+//print "codepage";
+[PTBR + 4*2] = retvalue;
+[PTBR + 4*2 + 1] = "0100"; 
+multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10);
+q = 5;
+while(q < 8)  do
+[PTBR + q*2] = -1;
+[PTBR + q*2 + 1] = "0000";
+q = q + 1;
+endwhile;
+breakpoint;
+//print q;
+alias disk_map R7;
+alias inode_entry R8;
+disk_map  = DISK_MAP_TABLE + [SYSTEM_STATUS_TABLE + 1]*10;
+//print index;
+inode_entry = INODE_TABLE + 16*index;
+[disk_map + 0] = -1;
+[disk_map + 1] = -1;
+[disk_map + 2] = -1;
+[disk_map + 3] = -1;
+[disk_map + 4] = [inode_entry + 8];
+[disk_map + 5] = [inode_entry + 9];
+[disk_map + 6] = [inode_entry + 10];
+[disk_map + 7] = [inode_entry + 11];
+[disk_map + 8] = -1;
+[disk_map + 9] = -1;
+
+alias w R7;
+w = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 11]*512 + 496;
+alias x R8;
+x = 0;
+while(x<8) do
+[w + x*2] = -1;
+[w + x*2 + 1] = -1;
+x = x + 1;
+endwhile;    
+
+
+//loadi([PTBR + 8],70);
+//print "tarun";
+//print [PTBR+16];
+//print [PTBR+8];
+//print [[PTBR+8]*512+1];
+breakpoint;
+[[PTBR + 16] * 512] = [[PTBR + 8] * 512 + 1];
+SP = 8 * 512;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+ireturn;

@@ -1,0 +1,22 @@
+int main() {
+decl 
+int temp,n,temp1,temp2,temp3,temp4;
+enddecl
+begin
+	temp = exposcall("Fork");
+	if(temp == 0) then
+	//write(temp);
+	temp3 = exposcall("Fork");
+	if(temp3 == 0) then
+	temp4 = exposcall("Exec","even.xsm");
+	else
+	temp1 = exposcall("Exec","even.xsm");
+	endif;
+	else
+	temp2 = exposcall("Exec","prime.xsm");
+	endif;
+return 0;
+end
+}
+
+
